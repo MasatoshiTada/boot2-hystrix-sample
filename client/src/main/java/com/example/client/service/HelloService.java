@@ -5,6 +5,7 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -15,9 +16,11 @@ public class HelloService {
     private static final Logger logger = LoggerFactory.getLogger(HelloService.class);
 
     private final RestTemplate restTemplate;
+    private final String producerBaseUri;
 
-    public HelloService(@LoadBalanced RestTemplate restTemplate) {
+    public HelloService(@LoadBalanced RestTemplate restTemplate, @Value("${producer.base-uri}") String producerBaseUri) {
         this.restTemplate = restTemplate;
+        this.producerBaseUri = producerBaseUri;
     }
 
     @HystrixCommand(fallbackMethod = "executeFallback"
@@ -31,12 +34,13 @@ public class HelloService {
             // ウィンドウサイズ（デフォルトは10秒）
             , @HystrixProperty(name = "metrics.rollingStats.timeInMilliseconds", value = "5000")
             // Open -> Half-Openまでの時間（デフォルトは5秒）
-            , @HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "10000")
+            , @HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "3000")
     }
     )
     public HelloDto execute(String prefix) {
+        logger.info("execute()を実行します・・・");
         HelloDto helloDto = restTemplate.getForObject(
-                "http://producer/api/hello", HelloDto.class);
+                producerBaseUri + "/api/hello", HelloDto.class);
         helloDto.setMessage(prefix + " : " + helloDto.getMessage());
         return helloDto;
     }
