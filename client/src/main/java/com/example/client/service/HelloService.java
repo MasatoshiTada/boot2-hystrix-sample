@@ -35,6 +35,7 @@ public class HelloService {
             , @HystrixProperty(name = "metrics.rollingStats.timeInMilliseconds", value = "5000")
             // Open -> Half-Openまでの時間（デフォルトは5秒）
             , @HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "3000")
+            , @HystrixProperty(name = "execution.isolation.strategy", value = "THREAD")
     }
     )
     public HelloDto execute(String prefix) {
